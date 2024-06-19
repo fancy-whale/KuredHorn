@@ -26,8 +26,8 @@ spec:
   values:
     image:
       pullPolicy: IfNotPresent
-      repo: gcarrarom/kuredhorn
-      tag: 0.0.2
+      repo: ghcr.io/fancy-whale/kuredhorn
+      tag: latest
     replicas: 1
     serviceAccount:
       enabled: true
