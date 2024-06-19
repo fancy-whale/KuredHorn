@@ -1,0 +1,60 @@
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: gitlab-fancycharts
+spec:
+  interval: 1m
+  provider: generic
+  timeout: 60s
+  url: https://gitlab.fancywhale.ca/api/v4/projects/104/packages/helm/stable
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: kuredhorn
+spec:
+  chart:
+    spec:
+      chart: main
+      interval: 1m
+      reconcileStrategy: ChartVersion
+      sourceRef:
+        kind: HelmRepository
+        name: gitlab-fancycharts
+      version: 0.10.4 # renovate: datasource=helm depName=main versioning=regex:^(?<major>\d+)\.(?<minor>\d+).(?<patch>\d+)$ registryUrl=https://gitlab.fancywhale.ca/api/v4/projects/104/packages/helm/stable
+  interval: 5m
+  values:
+    image:
+      pullPolicy: IfNotPresent
+      repo: gcarrarom/kuredhorn
+      tag: 0.0.2
+    replicas: 1
+    serviceAccount:
+      enabled: true
+      clusterRole: 
+        rules:
+          - apiGroups:
+              - ""
+            resources:
+              - pods
+            verbs:
+              - get
+              - list
+              - delete
+          - apiGroups:
+              - "longhorn.io"
+            resources:
+              - nodes
+              - replicas
+            verbs:
+              - get
+              - list
+              - watch
+              - patch
+          - apiGroups:
+              - ""
+            resources:
+              - nodes
+            verbs:
+              - get
+              - list
