@@ -16,11 +16,12 @@ console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
 
 # Create a formatter and add it to the console handler
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 console_handler.setFormatter(formatter)
 
 # Add the console handler to the logger
 logger.addHandler(console_handler)
+
 
 def check_nodes_for_annotation(
     all_nodes: List[V1Node], annotation_key: str
@@ -47,7 +48,12 @@ def check_nodes_for_annotation(
     return nodes_with_annotation
 
 
-def evict_longhorn_nodes(nodes_with_annotation: List[Union[V1Node, Any]], custom_client: CustomObjectsApi, longhorn_namespace: str, annotation_key: str) -> None:
+def evict_longhorn_nodes(
+    nodes_with_annotation: List[Union[V1Node, Any]],
+    custom_client: CustomObjectsApi,
+    longhorn_namespace: str,
+    annotation_key: str,
+) -> None:
     # Try to set the longhorn node to evacuate
     all_longhorn_nodes = custom_client.list_namespaced_custom_object(
         "longhorn.io", "v1beta2", longhorn_namespace, "nodes"
@@ -66,9 +72,15 @@ def evict_longhorn_nodes(nodes_with_annotation: List[Union[V1Node, Any]], custom
         try:
             # if the kured-reboot-in-progress annotation is already set, skip the node
             if (
-                annotation_key in node.get("metadata").get("annotations", {}).get(annotation_key, 'false') == 'true'
+                annotation_key
+                in node.get("metadata")
+                .get("annotations", {})
+                .get(annotation_key, "false")
+                == "true"
             ):
-                logger.info(f"Node {node.get('metadata').get('name')} already being drained")
+                logger.info(
+                    f"Node {node.get('metadata').get('name')} already being drained"
+                )
                 continue
 
             # change the response object's spec to be unschedulable and to evacuate the node
@@ -98,7 +110,12 @@ def evict_longhorn_nodes(nodes_with_annotation: List[Union[V1Node, Any]], custom
             raise e
 
 
-def remove_longhorn_eviction(api_client: CoreV1Api, custom_client: CustomObjectsApi, longhorn_namespace: str, annotation_key: str) -> None:
+def remove_longhorn_eviction(
+    api_client: CoreV1Api,
+    custom_client: CustomObjectsApi,
+    longhorn_namespace: str,
+    annotation_key: str,
+) -> None:
     all_longhorn_nodes = custom_client.list_namespaced_custom_object(
         "longhorn.io", "v1beta2", longhorn_namespace, "nodes"
     ).get("items")
@@ -109,13 +126,17 @@ def remove_longhorn_eviction(api_client: CoreV1Api, custom_client: CustomObjects
 
     for node in all_longhorn_nodes:
         # if the kured-reboot-in-progress annotation is set, check if the node has been drained and rebooted
-        annotation = node.get("metadata").get("annotations", {}).get(annotation_key, None)
+        annotation = (
+            node.get("metadata").get("annotations", {}).get(annotation_key, None)
+        )
         if annotation == "true":
             # Longhorn node has been drained, checking if the node is still cordoned through the kubernetes API
             try:
                 node_classic = api_client.read_node(node.get("metadata").get("name"))
                 if node_classic.spec.unschedulable:
-                    logger.info(f"Node {node.get('metadata').get('name')} is still cordoned")
+                    logger.info(
+                        f"Node {node.get('metadata').get('name')} is still cordoned"
+                    )
                     continue
             except Exception as e:
                 logger.error(
@@ -124,14 +145,18 @@ def remove_longhorn_eviction(api_client: CoreV1Api, custom_client: CustomObjects
                 raise e
             # if the node is no longer cordoned, remove the annotation and allow scheduling
             try:
-                logger.info(f"Node {node.get('metadata').get('name')} is no longer cordoned")
+                logger.info(
+                    f"Node {node.get('metadata').get('name')} is no longer cordoned"
+                )
                 node["spec"]["allowScheduling"] = True
                 node["spec"]["evictionRequested"] = False
                 # remove the annotation from the node object
                 if "annotations" in node["metadata"]:
                     if annotation_key in node["metadata"]["annotations"]:
-                        logger.info(f"Setting annotation {annotation_key} on node {node['metadata']['name']} to false")
-                        node["metadata"]["annotations"][annotation_key] = 'false'
+                        logger.info(
+                            f"Setting annotation {annotation_key} on node {node['metadata']['name']} to false"
+                        )
+                        node["metadata"]["annotations"][annotation_key] = "false"
 
                 # patch the node object to set the node to evacuate
                 custom_client.patch_namespaced_custom_object(
@@ -143,7 +168,9 @@ def remove_longhorn_eviction(api_client: CoreV1Api, custom_client: CustomObjects
                     node,
                 )
 
-                logger.info(f"Removed eviction status from node {node.get('metadata').get('name')}")
+                logger.info(
+                    f"Removed eviction status from node {node.get('metadata').get('name')}"
+                )
             except Exception as e:
                 logger.error(
                     f"An error occurred while removing eviction from node {node.get('metadata').get('name')}: {str(e)}"
@@ -153,7 +180,12 @@ def remove_longhorn_eviction(api_client: CoreV1Api, custom_client: CustomObjects
             continue
 
 
-def delete_longhorn_instance_manager(custom_client: CustomObjectsApi, api_client: CoreV1Api, longhorn_namespace: str, annotation_key: str) -> None:
+def delete_longhorn_instance_manager(
+    custom_client: CustomObjectsApi,
+    api_client: CoreV1Api,
+    longhorn_namespace: str,
+    annotation_key: str,
+) -> None:
     # Get the list of longhorn nodes
     all_longhorn_nodes = custom_client.list_namespaced_custom_object(
         "longhorn.io", "v1beta2", longhorn_namespace, "nodes"
@@ -166,26 +198,31 @@ def delete_longhorn_instance_manager(custom_client: CustomObjectsApi, api_client
 
     # check if there are any volumes on the node that is currently being drained
     for node in all_longhorn_nodes:
-        if node.get('metadata').get('annotations', {}).get(annotation_key, None) != 'true':
+        if (
+            node.get("metadata").get("annotations", {}).get(annotation_key, None)
+            != "true"
+        ):
             continue
-    
-        node_name = node.get('metadata').get('name')
+
+        node_name = node.get("metadata").get("name")
         volumes_on_node = [
             volume
             for volume in all_longhorn_replicas
-            if volume.get('spec').get('nodeID') == node_name
+            if volume.get("spec").get("nodeID") == node_name
         ]
         if len(volumes_on_node) != 0:
-            logger.info(f"Node {node_name} has replicas, skipping deletion of instance manager until replicas are moved")
+            logger.info(
+                f"Node {node_name} has replicas, skipping deletion of instance manager until replicas are moved"
+            )
             continue
-    
+
         logger.info(f"Node {node_name} has no replicas, deleting instance manager")
         # get pods on the longhorn namespace and check if the instance manager is running on the node
         pods = api_client.list_namespaced_pod(longhorn_namespace).items
         instance_manager_pod = [
             pod
             for pod in pods
-            if pod.metadata.labels.get('longhorn.io/component') == 'instance-manager'
+            if pod.metadata.labels.get("longhorn.io/component") == "instance-manager"
             and pod.spec.node_name == node_name
         ]
         if len(instance_manager_pod) == 0:
@@ -201,6 +238,7 @@ def delete_longhorn_instance_manager(custom_client: CustomObjectsApi, api_client
             )
             raise e
 
+
 def main(testing: bool = False, not_in_cluster: bool = False) -> None:
     try:
         # Load the Kubernetes configuration
@@ -211,7 +249,9 @@ def main(testing: bool = False, not_in_cluster: bool = False) -> None:
             logger.info("Loading out-of-cluster configuration")
             config.load_kube_config()
     except Exception as e:
-        logger.error(f"An error occurred while loading the Kubernetes configuration: {str(e)}")
+        logger.error(
+            f"An error occurred while loading the Kubernetes configuration: {str(e)}"
+        )
         raise e
 
     # Create a Kubernetes API client
@@ -240,13 +280,19 @@ def main(testing: bool = False, not_in_cluster: bool = False) -> None:
             )
 
             # Do the needful with the nodes that have the desired annotation
-            evict_longhorn_nodes(nodes_with_annotation, custom_client, longhorn_namespace, annotation_key)
+            evict_longhorn_nodes(
+                nodes_with_annotation, custom_client, longhorn_namespace, annotation_key
+            )
 
             # remove longhorn eviction on nodes that have already been drained and rebooted
-            remove_longhorn_eviction(api_client, custom_client, longhorn_namespace, annotation_key)
+            remove_longhorn_eviction(
+                api_client, custom_client, longhorn_namespace, annotation_key
+            )
 
             # Delete longhorn instance manager from the node if there are no more volumes there
-            delete_longhorn_instance_manager(custom_client, api_client, longhorn_namespace, annotation_key)
+            delete_longhorn_instance_manager(
+                custom_client, api_client, longhorn_namespace, annotation_key
+            )
 
             if testing:
                 logger.info("Exiting as testing is enabled")

@@ -27,7 +27,7 @@ env:
   LONGHORN_NAMESPACE: "longhorn-system" # The namespace where LongHorn is installed. Default is longhorn-system
 serviceAccount: # The service account the pod should run as
   enabled: true # Whether to create a service account
-  clusterRole:  # The cluster role to bind to the service account
+  clusterRole: # The cluster role to bind to the service account
     rules: # The rules to bind to the service account
       - apiGroups: # This rule allows the service account to list and delete pods for deleting the longhorn manager pods
           - ""
