@@ -23,8 +23,8 @@ env:
   ## You can run this image in a non-cluster environment like this:
   ## docker run -v ~/.kube/config:/root/.kube/config -it -e NOT_IN_CLUSTER=true ghcr.io/fancy-whale/kuredhorn:latest
   # TESTING: "true" # If you are testing, set this to true, it will allow you to run this only once, without the need to get stuck in a loop
-  # SLEEP_DURATION: "60" # The number of seconds to sleep between checks. Default is 60
-  # LONGHORN_NAMESPACE: "longhorn-system" # The namespace where LongHorn is installed. Default is longhorn-system
+  SLEEP_DURATION: "60" # The number of seconds to sleep between checks. Default is 60
+  LONGHORN_NAMESPACE: "longhorn-system" # The namespace where LongHorn is installed. Default is longhorn-system
 serviceAccount: # The service account the pod should run as
   enabled: true # Whether to create a service account
   clusterRole:  # The cluster role to bind to the service account
