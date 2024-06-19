@@ -23,5 +23,5 @@ jobs:
         file: ./Dockerfile
         push: true
         tags: |
-            ghcr.io/gcarrarom/kuredhorn:latest
-            ghcr.io/gcarrarom/kuredhorn:${{ github.sha }}
+            ghcr.io/fancy-whale/kuredhorn:latest
+            ghcr.io/fancy-whale/kuredhorn:${{ github.sha }}
