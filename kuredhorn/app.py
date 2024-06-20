@@ -185,16 +185,18 @@ def delete_longhorn_instance_manager(
     api_client: CoreV1Api,
     longhorn_namespace: str,
     annotation_key: str,
+    remove_replicas: bool = False,
 ) -> None:
     # Get the list of longhorn nodes
     all_longhorn_nodes = custom_client.list_namespaced_custom_object(
         "longhorn.io", "v1beta2", longhorn_namespace, "nodes"
     ).get("items")
 
-    # Get the list of longhorn volumes
-    all_longhorn_replicas = custom_client.list_namespaced_custom_object(
-        "longhorn.io", "v1beta1", longhorn_namespace, "replicas"
-    ).get("items")
+    if remove_replicas:
+        # Get the list of longhorn volumes
+        all_longhorn_replicas = custom_client.list_namespaced_custom_object(
+            "longhorn.io", "v1beta1", longhorn_namespace, "replicas"
+        ).get("items")
 
     # check if there are any volumes on the node that is currently being drained
     for node in all_longhorn_nodes:
@@ -205,18 +207,19 @@ def delete_longhorn_instance_manager(
             continue
 
         node_name = node.get("metadata").get("name")
-        volumes_on_node = [
-            volume
-            for volume in all_longhorn_replicas
-            if volume.get("spec").get("nodeID") == node_name
-        ]
-        if len(volumes_on_node) != 0:
-            logger.info(
-                f"Node {node_name} has replicas, skipping deletion of instance manager until replicas are moved"
-            )
-            continue
-
-        logger.info(f"Node {node_name} has no replicas, deleting instance manager")
+        if remove_replicas:
+            volumes_on_node = [
+                volume
+                for volume in all_longhorn_replicas
+                if volume.get("spec").get("nodeID") == node_name
+            ]
+            if len(volumes_on_node) != 0:
+                logger.info(
+                    f"Node {node_name} has replicas, skipping deletion of instance manager until replicas are moved"
+                )
+                continue
+        if not remove_replicas:
+            logger.info(f"Node {node_name} has no replicas, deleting instance manager")
         # get pods on the longhorn namespace and check if the instance manager is running on the node
         pods = api_client.list_namespaced_pod(longhorn_namespace).items
         instance_manager_pod = [
@@ -264,6 +267,9 @@ def main(testing: bool = False, not_in_cluster: bool = False) -> None:
 
     sleep_duration = int(os.environ.get("SLEEP_DURATION", 60))
 
+    # Check whether or not to remove the replicas before deleting the instance manager
+    remove_replicas = os.environ.get("REMOVE_REPLICAS", "False").lower() == "true"
+
     # Loop to check nodes for the annotation
     not_done = True
     while True and not_done:
@@ -291,7 +297,7 @@ def main(testing: bool = False, not_in_cluster: bool = False) -> None:
 
             # Delete longhorn instance manager from the node if there are no more volumes there
             delete_longhorn_instance_manager(
-                custom_client, api_client, longhorn_namespace, annotation_key
+                custom_client, api_client, longhorn_namespace, annotation_key, remove_replicas
             )
 
             if testing:
