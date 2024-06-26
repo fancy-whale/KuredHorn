@@ -25,7 +25,7 @@ spec:
   interval: 5m
   values:
     image:
-      pullPolicy: IfNotPresent
+      pullPolicy: Always
       repo: ghcr.io/fancy-whale/kuredhorn
       tag: latest
     replicas: 1

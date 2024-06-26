@@ -13,10 +13,13 @@ logger.setLevel(logging.INFO)
 
 # Create a console handler and set its log level
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
+if os.environ.get("DEBUG", "False").lower() == "true":
+    console_handler.setLevel(logging.DEBUG)
+else:
+    console_handler.setLevel(logging.INFO)
 
 # Create a formatter and add it to the console handler
-formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S %Z")
 console_handler.setFormatter(formatter)
 
 # Add the console handler to the logger
