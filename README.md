@@ -10,7 +10,7 @@ If you have flux installed with helm-releases and you are using LongHorn, you mi
 kubectl apply -f https://raw.githubusercontent.com/fancy-whale/KuredHorn/main/helmrelease.yaml
 ```
 
-if you don't have Flux and helm-releases, you can use the FancyWhale helm chart to install this fix. First you need to add the necessary configuration into a values.yaml file:
+If you don't have Flux and helm-releases, you can use the FancyWhale helm chart to install this fix. First you need to add the necessary configuration into a values.yaml file:
 
 ```yaml
 image: # The image to use for the container
@@ -27,6 +27,10 @@ env:
   LONGHORN_NAMESPACE: "longhorn-system" # The namespace where LongHorn is installed. Default is longhorn-system
   REMOVE_REPLICAS: "false" # Whether to remove replicas from the node. Default is False.
   DEBUG: "false" # Whether to run in debug mode. Default is False.
+ingress: # There is no need for ingress here.
+  enabled: false
+service: # This app should not expose anything
+  enabled: false
 serviceAccount: # The service account the pod should run as
   enabled: true # Whether to create a service account
   clusterRole: # The cluster role to bind to the service account
@@ -58,6 +62,7 @@ serviceAccount: # The service account the pod should run as
           - list
 ```
 
+You can find the source code of this helm chart here: <https://gitlab.fancywhale.ca/fancywhale-corporation/fancy-charts>
 Now that you have the configuration, you can install the chart:
 
 ```bash
