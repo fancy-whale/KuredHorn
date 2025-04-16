@@ -21,7 +21,7 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: gitlab-fancycharts
-      version: 0.10.4 # renovate: datasource=helm depName=main versioning=regex:^(?<major>\d+)\.(?<minor>\d+).(?<patch>\d+)$ registryUrl=https://gitlab.fancywhale.ca/api/v4/projects/104/packages/helm/stable
+      version: 0.12.0 # renovate: datasource=helm depName=main versioning=regex:^(?<major>\d+)\.(?<minor>\d+).(?<patch>\d+)$ registryUrl=https://gitlab.fancywhale.ca/api/v4/projects/104/packages/helm/stable
   interval: 5m
   values:
     image:
@@ -29,9 +29,13 @@ spec:
       repo: ghcr.io/fancy-whale/kuredhorn
       tag: latest
     replicas: 1
+    service:
+      enabled: false
+    ingress:
+      enabled: false
     serviceAccount:
       enabled: true
-      clusterRole: 
+      clusterRole:
         rules:
           - apiGroups:
               - ""
@@ -58,3 +62,4 @@ spec:
             verbs:
               - get
               - list
+
