@@ -19,7 +19,9 @@ else:
     console_handler.setLevel(logging.INFO)
 
 # Create a formatter and add it to the console handler
-formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S %Z")
+formatter = logging.Formatter(
+    "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S %Z"
+)
 console_handler.setFormatter(formatter)
 
 # Add the console handler to the logger
@@ -36,14 +38,25 @@ def check_nodes_for_annotation(
 
     # Iterate over each node
     for node in all_nodes:
+        if node.metadata is None:
+            logger.warning(
+                f"The node {node} does not have metadata - should not happen"
+            )
+            continue
         # Check if the annotation exists on the node
         if (
             annotation_key in node.metadata.annotations
-            and node.metadata.annotations[annotation_key]
+            and node.metadata.annotations.get(annotation_key, None)
         ):
+            if node.spec is None:
+                logger.warning(
+                    f"Node {node.metadata.name} does not have a spec - should not happen"
+                )
+                continue
             # Check if node is cordoned
             if node.spec.unschedulable:
                 logger.info(f"Node {node.metadata.name} is already cordoned")
+
                 # Add the node to the list of nodes with the desired annotation
                 nodes_with_annotation.append(node)
 
@@ -62,15 +75,20 @@ def evict_longhorn_nodes(
         "longhorn.io", "v1beta2", longhorn_namespace, "nodes"
     ).get("items")
 
+    logger.info("Starting Longhorn Nodes eviction check...")
     logger.info(
-        f"all_longhorn_nodes: {[node.get('metadata').get('name') for node in all_longhorn_nodes]}"
+        f"These are the current nodes in use by longhorn: {[node.get('metadata').get('name') for node in all_longhorn_nodes]}"
     )
+
+    node_names = []
+    for node_classic in nodes_with_annotation:
+        if node_classic.metadata is not None:
+            node_names.append(node_classic.metadata.name)
 
     for node in [
         node
         for node in all_longhorn_nodes
-        if node.get("metadata").get("name")
-        in [node_classic.metadata.name for node_classic in nodes_with_annotation]
+        if node.get("metadata", {"name": ""}).get("name") in node_names
     ]:
         try:
             # if the kured-reboot-in-progress annotation is already set, skip the node
@@ -123,6 +141,7 @@ def remove_longhorn_eviction(
         "longhorn.io", "v1beta2", longhorn_namespace, "nodes"
     ).get("items")
 
+    logger.info("Starting Longhorn Eviction removal check...")
     logger.info(
         f"all_longhorn_nodes: {[node.get('metadata').get('name') for node in all_longhorn_nodes]}"
     )
@@ -136,6 +155,8 @@ def remove_longhorn_eviction(
             # Longhorn node has been drained, checking if the node is still cordoned through the kubernetes API
             try:
                 node_classic = api_client.read_node(node.get("metadata").get("name"))
+                if node_classic.spec is None:
+                    continue
                 if node_classic.spec.unschedulable:
                     logger.info(
                         f"Node {node.get('metadata').get('name')} is still cordoned"
@@ -300,7 +321,11 @@ def main(testing: bool = False, not_in_cluster: bool = False) -> None:
 
             # Delete longhorn instance manager from the node if there are no more volumes there
             delete_longhorn_instance_manager(
-                custom_client, api_client, longhorn_namespace, annotation_key, remove_replicas
+                custom_client,
+                api_client,
+                longhorn_namespace,
+                annotation_key,
+                remove_replicas,
             )
 
             if testing:

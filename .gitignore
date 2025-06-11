@@ -1,3 +1,5 @@
 **/__pycache__/**
 **/ruff_cache/**
 monkeytype.sqlite3
+pyrightconfig.json
+poetry.lock
