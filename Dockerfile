@@ -1,5 +1,5 @@
 # Use the official Python image as the base image
-FROM python:3.11
+FROM python:3.12
 
 # Set the working directory inside the container
 WORKDIR /app
@@ -10,8 +10,8 @@ COPY poetry.lock pyproject.toml /app/
 # Install Poetry
 RUN pip install poetry
 
-# Install project dependencies without creating a virtual environment and without installing the dev group
-RUN poetry install --no-root --no-dev
+# Install project dependencies without creating a virtual environment
+RUN poetry install --no-root --without dev
 
 # Copy the rest of the project files to the working directory
 COPY ./kuredhorn /app/kuredhorn
