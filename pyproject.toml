@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kuredhorn"
-version = "0.1.0"
+version = "0.0.4"
 description = ""
 authors = ["Gui Martins <gmartins@fancywhale.ca>"]
 license = "MIT"
