@@ -42,4 +42,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.REPO }}:latest,${{ env.REGISTRY }}/${{ env.REPO }}:${{VERSION}}
+          tags: ${{ env.REGISTRY }}/${{ env.REPO }}:latest,${{ env.REGISTRY }}/${{ env.REPO }}:${{ env.VERSION }}
