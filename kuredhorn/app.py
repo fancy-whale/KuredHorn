@@ -43,11 +43,9 @@ def check_nodes_for_annotation(
                 f"The node {node} does not have metadata - should not happen"
             )
             continue
+        annotations = node.metadata.annotations or {}
         # Check if the annotation exists on the node
-        if (
-            annotation_key in node.metadata.annotations
-            and node.metadata.annotations.get(annotation_key, None)
-        ):
+        if annotation_key in annotations and annotations.get(annotation_key, None):
             if node.spec is None:
                 logger.warning(
                     f"Node {node.metadata.name} does not have a spec - should not happen"
@@ -93,8 +91,7 @@ def evict_longhorn_nodes(
         try:
             # if the kured-reboot-in-progress annotation is already set, skip the node
             if (
-                annotation_key
-                in node.get("metadata")
+                node.get("metadata", {})
                 .get("annotations", {})
                 .get(annotation_key, "false")
                 == "true"
