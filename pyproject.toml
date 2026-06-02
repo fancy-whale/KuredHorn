@@ -1,24 +1,27 @@
-[tool.poetry]
+[project]
 name = "kuredhorn"
 version = "0.0.5"
 description = ""
-authors = ["Gui Martins <gmartins@fancywhale.ca>"]
-license = "MIT"
 readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Gui Martins", email = "gmartins@fancywhale.ca" },
+]
+license = { text = "MIT" }
+dependencies = [
+    "kubernetes>=36.0.2,<37",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-kubernetes = "^36.0.2"
-
-
-[tool.poetry.group.dev.dependencies]
-monkeytype = "^23.3.0"
-pytest = "^9.0.3"
+[dependency-groups]
+dev = [
+    "monkeytype>=23.3.0,<24",
+    "pytest>=9.0.3,<10",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

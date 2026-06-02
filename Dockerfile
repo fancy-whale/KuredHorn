@@ -4,17 +4,17 @@ FROM python:3.12
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the poetry.lock and pyproject.toml files to the working directory
-COPY poetry.lock pyproject.toml /app/
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:0.7.21 /uv /uvx /bin/
 
-# Install Poetry
-RUN pip install poetry
+# Copy the dependency metadata to the working directory
+COPY pyproject.toml uv.lock /app/
 
-# Install project dependencies without creating a virtual environment
-RUN poetry install --no-root --without dev
+# Install project dependencies
+RUN uv sync --locked --no-dev --no-install-project
 
 # Copy the rest of the project files to the working directory
 COPY ./kuredhorn /app/kuredhorn
 
 # Set the entrypoint to run the script
-ENTRYPOINT ["poetry", "run", "python", "-m", "kuredhorn"]
+ENTRYPOINT ["uv", "run", "--no-dev", "python", "-m", "kuredhorn"]
