@@ -90,12 +90,8 @@ def evict_longhorn_nodes(
     ]:
         try:
             # if the kured-reboot-in-progress annotation is already set, skip the node
-            if (
-                node.get("metadata", {})
-                .get("annotations", {})
-                .get(annotation_key, "false")
-                == "true"
-            ):
+            node_annotations = node.get("metadata", {}).get("annotations", {})
+            if node_annotations.get(annotation_key, "false") == "true":
                 logger.info(
                     f"Node {node.get('metadata').get('name')} already being drained"
                 )

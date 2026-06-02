@@ -178,6 +178,7 @@ def test_delete_longhorn_instance_manager_skips_when_replicas_remain():
         remove_replicas=True,
     )
 
+    api_client.list_namespaced_pod.assert_not_called()
     api_client.delete_namespaced_pod.assert_not_called()
 
 
