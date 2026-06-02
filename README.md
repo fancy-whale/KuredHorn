@@ -2,6 +2,16 @@
 
 This is not supposed to be a long term fix, but it should work for now.
 
+## Development
+
+Use uv for local development:
+
+```bash
+uv sync
+uv run pytest
+uv build
+```
+
 ## TL;DR
 
 If you have flux installed with helm-releases and you are using LongHorn, you might have a problem with the KuReD feature. This is a fix for that.
